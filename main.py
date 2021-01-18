@@ -21,7 +21,7 @@ def load_image(name, colorkey=None):
 
 
 pygame.init()
-screen_size = (500, 500)
+screen_size = (1280, 720)
 screen = pygame.display.set_mode(screen_size)
 FPS = 50
 
@@ -92,24 +92,38 @@ def terminate():
     sys.exit()
 
 
-def start_screen():
-    intro_text = ["ЗАСТАВКА", "",
-                  "Правила игры",
-                  "Если в правилах несколько строк,",
-                  "приходится выводить их построчно"]
+def fonts():
+    print(pygame.font.get_fonts())
+    print(pygame.font.match_font('comicsansms'))
 
-    fon = pygame.transform.scale(load_image('fon.jpg'), screen_size)
+    intro_text = ["Правила игры:",
+                  "На планету Яндекса напал Гугл!!!",
+                  "Ваша цель - пробраться через базы злодея,",
+                  "найти священный компьютер Яндекса и запустить его,",
+                  "чтобы вернуть прежний вид нашей земле."]
+
+    fon = pygame.transform.scale(load_image('fon 1.jpg'), screen_size)
     screen.blit(fon, (0, 0))
-    font = pygame.font.Font(None, 30)
-    text_coord = 50
+    font_size_rules = 20
+    font_rules = pygame.font.Font("data/18965.ttf", font_size_rules)
+    text_coord = 550
     for line in intro_text:
-        string_rendered = font.render(line, 1, pygame.Color('black'))
+        string_rendered = font_rules.render(line, 1, pygame.Color('white'))
         intro_rect = string_rendered.get_rect()
         text_coord += 10
         intro_rect.top = text_coord
-        intro_rect.x = 10
+        intro_rect.x = 510
         text_coord += intro_rect.height
         screen.blit(string_rendered, intro_rect)
+
+    font_size_NameOfGame = 50
+    font_NameOfGame = pygame.font.Font("data/18965.ttf", font_size_NameOfGame)
+    nameOfGame = font_NameOfGame.render("SAVE THE YANDEX", 1, pygame.Color('white'))
+    screen.blit(nameOfGame, (370, 100))
+
+
+def start_screen():
+    fonts()
 
     while True:
         for event in pygame.event.get():
@@ -123,16 +137,17 @@ def start_screen():
 
 
 def load_level(filename):
+    global screen
+
     filename = "data/" + filename
-    # читаем уровень, убирая символы перевода строки
     with open(filename, 'r') as mapFile:
         level_map = [line.strip() for line in mapFile]
-
-    # и подсчитываем максимальную длину
+    with open(filename, 'r') as mapFile:
+        max_height = len([line.strip() for line in mapFile])
     max_width = max(map(len, level_map))
-
-    # дополняем каждую строку пустыми клетками ('.')
-    return list(map(lambda x: x.ljust(max_width, '.'), level_map))
+    screen_size = (max_width * tile_width, max_height * tile_height)
+    screen = pygame.display.set_mode(screen_size)
+    return list(map(lambda x: list(x.ljust(max_width, '.')), level_map))
 
 
 def generate_level(level):
