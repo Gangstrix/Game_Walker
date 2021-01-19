@@ -21,6 +21,8 @@ def load_image(name, colorkey=None):
 
 
 pygame.init()
+pygame.display.set_caption('SAVE THE YANDEX')
+pygame.display.set_icon(pygame.image.load("data/logo.ico"))
 screen_size = (1280, 720)
 screen = pygame.display.set_mode(screen_size)
 FPS = 50
@@ -102,7 +104,7 @@ def fonts():
                   "найти священный компьютер Яндекса и запустить его,",
                   "чтобы вернуть прежний вид нашей земле."]
 
-    fon = pygame.transform.scale(load_image('fon 1.jpg'), screen_size)
+    fon = pygame.transform.scale(load_image('fon 2.jpg'), screen_size)
     screen.blit(fon, (0, 0))
     font_size_rules = 20
     font_rules = pygame.font.Font("data/18965.ttf", font_size_rules)
