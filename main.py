@@ -3,6 +3,7 @@ import sys
 import os
 
 
+# Функция для загрузки изображения
 def load_image(name, colorkey=None):
     fullname = os.path.join('data', name)  # если файл не существует, то выходим
     if not os.path.isfile(fullname):
@@ -20,26 +21,117 @@ def load_image(name, colorkey=None):
     return image
 
 
+# Инициализация PyGame
 pygame.init()
 pygame.display.set_caption('SAVE THE YANDEX')
 pygame.display.set_icon(pygame.image.load("data/logo.ico"))
-screen_size = (1280, 720)
+screen_size = (1300, 750)
 screen = pygame.display.set_mode(screen_size)
-FPS = 50
+FPS = 60
 
 tile_images = {
-    'wall': load_image('box.png'),
-    'empty': load_image('block.png')
+    'wall': load_image('google.png'),
+    'empty': load_image('grass.png'),
+    'wall2': load_image('box.png'),
+    'empty2': load_image('block.png')
 }
 player_image = load_image('gangstrix.png')
+tile_enemies = {
+    'dino': load_image('dino.png'),
+    'google': load_image('villain.png')
+}
+exit_game = load_image('exit.png')
 
 tile_width = tile_height = 50
+
+
+# Аварийный выход из игры
+def terminate():
+    pygame.quit()
+    sys.exit()
+
+
+# Отрисовка начальной заставки игры
+def fon():
+    intro_text = ["Правила игры:",
+                  "На планету Яндекса напал Гугл!!!",
+                  "Ваша цель - пробраться через базы злодея,",
+                  "найти священный компьютер Яндекса и запустить его,",
+                  "чтобы вернуть прежний вид нашей земле."]
+
+    fon = pygame.transform.scale(load_image('fon 2.jpg'), screen_size)
+    screen.blit(fon, (0, 0))
+    font_size_rules = 20
+    font_rules = pygame.font.Font("data/18965.ttf", font_size_rules)
+    text_coord = 550
+    for line in intro_text:
+        string_rendered = font_rules.render(line, 1, pygame.Color('white'))
+        intro_rect = string_rendered.get_rect()
+        text_coord += 10
+        intro_rect.top = text_coord
+        intro_rect.x = 510
+        text_coord += intro_rect.height
+        screen.blit(string_rendered, intro_rect)
+
+    font_size_NameOfGame = 50
+    font_NameOfGame = pygame.font.Font("data/18965.ttf", font_size_NameOfGame)
+    nameOfGame = font_NameOfGame.render("SAVE THE YANDEX", 1, pygame.Color('white'))
+    screen.blit(nameOfGame, (370, 100))
+
+
+# Начальная заставка игры
+def start_screen():
+    fon()
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                terminate()
+            elif event.type == pygame.KEYDOWN or \
+                    event.type == pygame.MOUSEBUTTONDOWN:
+                return  # начинаем игру
+        pygame.display.flip()
+        clock.tick(FPS)
+
+
+# Загрузка уровня
+def load_level(filename):
+    global screen
+
+    filename = "data/" + filename
+    with open(filename, 'r') as mapFile:
+        level_map = [line.strip() for line in mapFile]
+    with open(filename, 'r') as mapFile:
+        max_height = len([line.strip() for line in mapFile])
+    max_width = max(map(len, level_map))
+    screen_size = (max_width * tile_width, max_height * tile_height)
+    screen = pygame.display.set_mode(screen_size)
+    return list(map(lambda x: list(x.ljust(max_width, '.')), level_map))
+
+
+# Отрисовка уровня
+def generate_level(level):
+    new_player, x, y = None, None, None
+    for y in range(len(level)):
+        for x in range(len(level[y])):
+            if level[y][x] == '.':
+                Tile('empty', x, y)
+            elif level[y][x] == '#':
+                Tile('wall', x, y)
+            elif level[y][x] == '@':
+                Tile('empty', x, y)
+                new_player = Player(x, y)
+            elif level[y][x] == '!':
+                Tile('empty', x, y)
+                exit_of_game = Exit(x, y)
+    # вернем игрока, размер поля в клетках, а так же переход на новый уровень
+    return new_player, x, y, exit_of_game
 
 
 class ScreenFrame(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
-        self.rect = (0, 0, 500, 500)
+        self.rect = (0, 0, 1300, 750)
 
 
 class SpriteGroup(pygame.sprite.Group):
@@ -82,89 +174,24 @@ class Player(pygame.sprite.Sprite):
             tile_width * self.pos[0] + 15, tile_height * self.pos[1] + 5)
 
 
+class Exit(pygame.sprite.Sprite):
+    def __init__(self, pos_x, pos_y):
+        super().__init__(exit_group)
+        self.image = exit_game
+        self.rect = self.image.get_rect().move(
+            tile_width * pos_x, tile_height * pos_y)
+
+
+class Enemies(pygame.sprite.Sprite):
+    pass
+
+
 player = None
 running = True
 clock = pygame.time.Clock()
 sprite_group = SpriteGroup()
 hero_group = SpriteGroup()
-
-
-def terminate():
-    pygame.quit()
-    sys.exit()
-
-
-def fonts():
-    print(pygame.font.get_fonts())
-    print(pygame.font.match_font('comicsansms'))
-
-    intro_text = ["Правила игры:",
-                  "На планету Яндекса напал Гугл!!!",
-                  "Ваша цель - пробраться через базы злодея,",
-                  "найти священный компьютер Яндекса и запустить его,",
-                  "чтобы вернуть прежний вид нашей земле."]
-
-    fon = pygame.transform.scale(load_image('fon 2.jpg'), screen_size)
-    screen.blit(fon, (0, 0))
-    font_size_rules = 20
-    font_rules = pygame.font.Font("data/18965.ttf", font_size_rules)
-    text_coord = 550
-    for line in intro_text:
-        string_rendered = font_rules.render(line, 1, pygame.Color('white'))
-        intro_rect = string_rendered.get_rect()
-        text_coord += 10
-        intro_rect.top = text_coord
-        intro_rect.x = 510
-        text_coord += intro_rect.height
-        screen.blit(string_rendered, intro_rect)
-
-    font_size_NameOfGame = 50
-    font_NameOfGame = pygame.font.Font("data/18965.ttf", font_size_NameOfGame)
-    nameOfGame = font_NameOfGame.render("SAVE THE YANDEX", 1, pygame.Color('white'))
-    screen.blit(nameOfGame, (370, 100))
-
-
-def start_screen():
-    fonts()
-
-    while True:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                terminate()
-            elif event.type == pygame.KEYDOWN or \
-                    event.type == pygame.MOUSEBUTTONDOWN:
-                return  # начинаем игру
-        pygame.display.flip()
-        clock.tick(FPS)
-
-
-def load_level(filename):
-    global screen
-
-    filename = "data/" + filename
-    with open(filename, 'r') as mapFile:
-        level_map = [line.strip() for line in mapFile]
-    with open(filename, 'r') as mapFile:
-        max_height = len([line.strip() for line in mapFile])
-    max_width = max(map(len, level_map))
-    screen_size = (max_width * tile_width, max_height * tile_height)
-    screen = pygame.display.set_mode(screen_size)
-    return list(map(lambda x: list(x.ljust(max_width, '.')), level_map))
-
-
-def generate_level(level):
-    new_player, x, y = None, None, None
-    for y in range(len(level)):
-        for x in range(len(level[y])):
-            if level[y][x] == '.':
-                Tile('empty', x, y)
-            elif level[y][x] == '#':
-                Tile('wall', x, y)
-            elif level[y][x] == '@':
-                Tile('empty', x, y)
-                new_player = Player(x, y)
-    # вернем игрока, а также размер поля в клетках
-    return new_player, x, y
+exit_group = SpriteGroup()
 
 
 def move(hero, movement):
@@ -183,13 +210,16 @@ def move(hero, movement):
             hero.move(x + 1, y)
 
 
+current_level = 1
+quantity_levels = 6
 start_screen()
-level_map = load_level("map.map.txt")
-hero, max_x, max_y = generate_level(level_map)
+level_map = load_level("level_" + str(current_level) + ".txt")
+hero, max_x, max_y, exit_game = generate_level(level_map)
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+            terminate()
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_UP:
                 move(hero, "up")
@@ -199,9 +229,22 @@ while running:
                 move(hero, "left")
             elif event.key == pygame.K_RIGHT:
                 move(hero, "right")
-    screen.fill(pygame.Color("black"))
-    sprite_group.draw(screen)
-    hero_group.draw(screen)
+            if not pygame.sprite.collide_rect(hero, exit_game):
+                screen.fill(pygame.Color("black"))
+                sprite_group.draw(screen)
+                exit_group.draw(screen)
+                hero_group.draw(screen)
+            else:
+                current_level += 1
+                if current_level != quantity_levels:
+                    level_map = load_level("level_" + str(current_level) + ".txt")
+                    hero, max_x, max_y, exit_game = generate_level(level_map)
+                sprite_group.empty()
+                exit_group.empty()
+                hero_group.empty()
+                break
+
     clock.tick(FPS)
     pygame.display.flip()
+
 pygame.quit()
