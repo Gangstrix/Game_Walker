@@ -197,16 +197,16 @@ exit_group = SpriteGroup()
 def move(hero, movement):
     x, y = hero.pos
     if movement == "up":
-        if y > 0 and level_map[y - 1][x] == ".":
+        if y > 0 and level_map[y - 1][x] == "." or level_map[y - 1][x] == '!':
             hero.move(x, y - 1)
     elif movement == "down":
-        if y < max_y - 1 and level_map[y + 1][x] == ".":
+        if y < max_y - 1 and level_map[y + 1][x] == "." or level_map[y + 1][x] == '!':
             hero.move(x, y + 1)
     elif movement == "left":
-        if x > 0 and level_map[y][x - 1] == ".":
+        if x > 0 and level_map[y][x - 1] == "." or level_map[y][x - 1] == "!":
             hero.move(x - 1, y)
     elif movement == "right":
-        if x < max_x - 1 and level_map[y][x + 1] == ".":
+        if x < max_x - 1 and level_map[y][x + 1] == "." or level_map[y][x + 1] == "!":
             hero.move(x + 1, y)
 
 
@@ -229,20 +229,20 @@ while running:
                 move(hero, "left")
             elif event.key == pygame.K_RIGHT:
                 move(hero, "right")
-            if not pygame.sprite.collide_rect(hero, exit_game):
-                screen.fill(pygame.Color("black"))
-                sprite_group.draw(screen)
-                exit_group.draw(screen)
-                hero_group.draw(screen)
-            else:
-                current_level += 1
-                if current_level != quantity_levels:
-                    level_map = load_level("level_" + str(current_level) + ".txt")
-                    hero, max_x, max_y, exit_game = generate_level(level_map)
-                sprite_group.empty()
-                exit_group.empty()
-                hero_group.empty()
-                break
+        if not pygame.sprite.collide_mask(hero, exit_game):
+            screen.fill(pygame.Color("black"))
+            sprite_group.draw(screen)
+            exit_group.draw(screen)
+            hero_group.draw(screen)
+        else:
+            current_level += 1
+            if current_level != quantity_levels:
+                level_map = load_level("level_" + str(current_level) + ".txt")
+                hero, max_x, max_y, exit_game = generate_level(level_map)
+            sprite_group.empty()
+            exit_group.empty()
+            hero_group.empty()
+            continue
 
     clock.tick(FPS)
     pygame.display.flip()
