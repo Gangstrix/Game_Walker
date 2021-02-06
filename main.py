@@ -36,7 +36,10 @@ tile_images = {
     'empty2': load_image('block.png')
 }
 
-player_image = load_image('gangstrix.png')
+player_image = {
+    'strix': load_image('gangstrix.png'),
+    'teach': load_image('teacher.png')
+}
 
 tile_enemies = {
     'dino': load_image('dino.png'),
@@ -46,6 +49,7 @@ door = load_image('exit.png')
 
 tile_width = tile_height = 50
 
+hero_name = ''
 
 # Аварийный выход из игры
 def terminate():
@@ -122,29 +126,40 @@ def change_screen():
         pygame.display.flip()
         clock.tick(FPS)
 
+def set_hero(num):
+    global hero_name
+    if num == 1:
+        player_name = 'strix'
+        hero_name = player_name
+        return
+    else:
+        player_name = 'teach'
+        hero_name = player_name
+        return
+
 def lose_game_screen():
     fon = pygame.transform.scale(load_image('lose_fon.jpg'), screen_size)
     screen.blit(fon, (0, 0))
-    font_size_change = 50
+    font_size_change = 70
     font_change = pygame.font.Font("data/18965.ttf", font_size_change)
     change = font_change.render("YOU LOSE", 1, pygame.Color('white'))
-    screen.blit(change, (280, 60))
+    screen.blit(change, (450, 300))
 
 
 def lose_game():
     lose_game_screen()
 
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                terminate()
+            elif event.type == pygame.KEYDOWN or \
+                    event.type == pygame.MOUSEBUTTONDOWN:
+                return  # начинаем игру
 
+        clock.tick(FPS)
+        pygame.display.flip()
 
-
-def set_hero(num):
-    global player_image
-    if num == 1:
-        player_image = load_image('gangstrix.png')
-        return
-    else:
-        player_image = load_image('teacher.png')
-        return
 
 # Загрузка уровня
 def load_level(filename):
@@ -163,6 +178,7 @@ def load_level(filename):
 
 # Отрисовка уровня
 def generate_level(level):
+    global hero_name
     new_player, x, y = None, None, None
     for y in range(len(level)):
         for x in range(len(level[y])):
@@ -172,7 +188,7 @@ def generate_level(level):
                 Tile('wall', x, y)
             elif level[y][x] == '@':
                 Tile('empty', x, y)
-                new_player = Player(x, y)
+                new_player = Player(f'{hero_name}', x, y)
             elif level[y][x] == '!':
                 Tile('empty', x, y)
                 exit_of_game = Exit(x, y)
@@ -240,9 +256,9 @@ class Tile(pygame.sprite.Sprite):
 
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self, pos_x, pos_y):
+    def __init__(self, hero_type, pos_x, pos_y):
         super().__init__(hero_group)
-        self.image = player_image
+        self.image = player_image[hero_type]
         self.rect = self.image.get_rect().move(
             tile_width * pos_x + 15, tile_height * pos_y + 5)
         self.pos = (pos_x, pos_y)
@@ -270,6 +286,7 @@ class Enemies(pygame.sprite.Sprite):
 
 
 player = None
+game_over = False
 running = True
 clock = pygame.time.Clock()
 sprite_group = SpriteGroup()
@@ -305,10 +322,20 @@ def move(hero, movement):
 current_level = 1
 quantity_levels = 6
 start_screen()
-
+change_screen()
 level_map = load_level("level_" + str(current_level) + ".txt")
 hero, max_x, max_y, exit_game, vrag = generate_level(level_map)
 while running:
+    if game_over:
+        lose_game()
+        sprite_group.empty()
+        exit_group.empty()
+        hero_group.empty()
+        enemies_group.empty()
+        current_level = 1
+        level_map = load_level("level_" + str(current_level) + ".txt")
+        hero, max_x, max_y, exit_game, vrag = generate_level(level_map)
+        game_over = False
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
@@ -329,7 +356,7 @@ while running:
             hero_group.draw(screen)
             enemies_group.draw(screen)
         else:
-            lose_game()
+            game_over = True
         if not pygame.sprite.collide_mask(hero, exit_game):
             screen.fill(pygame.Color("black"))
             sprite_group.draw(screen)
@@ -344,7 +371,7 @@ while running:
                 hero_group.empty()
                 enemies_group.empty()
                 level_map = load_level("level_" + str(current_level) + ".txt")
-                hero, max_x, max_y, exit_game = generate_level(level_map)
+                hero, max_x, max_y, exit_game, vrag = generate_level(level_map)
             continue
 
     clock.tick(FPS)
