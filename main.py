@@ -119,10 +119,9 @@ def change_screen():
             if event.type == pygame.QUIT:
                 terminate()
             one_pers.draw_button(245, 600, 1)
-            return
             two_pers.draw_button(825, 600, 2)
-            return
-
+        if hero_name:
+            break
         pygame.display.flip()
         clock.tick(FPS)
 
@@ -194,9 +193,9 @@ def generate_level(level):
                 exit_of_game = Exit(x, y)
             elif level[y][x] == '%':
                 Tile('empty', x, y)
-                vrag = Enemies('dino', x, y)
-    # вернем игрока, размер поля в клетках, а так же переход на новый уровень
-    return new_player, x, y, exit_of_game, vrag
+                evil = Enemies('dino', x, y)
+    # вернем игрока, размер поля в клетках, врагов, а также переход на новый уровень
+    return new_player, x, y, exit_of_game, evil
 
 
 class Button:
@@ -282,7 +281,9 @@ class Enemies(pygame.sprite.Sprite):
         super().__init__(enemies_group)
         self.image = tile_enemies[enemies_type]
         self.rect = self.image.get_rect().move(
-            tile_width * pos_x, tile_height * pos_y)
+            tile_width * pos_x + 15, tile_height * pos_y + 5)
+        self.pos = (pos_x, pos_y)
+
 
 
 player = None
@@ -291,31 +292,31 @@ running = True
 clock = pygame.time.Clock()
 sprite_group = SpriteGroup()
 hero_group = SpriteGroup()
-exit_group = SpriteGroup()
 enemies_group = SpriteGroup()
+exit_group = SpriteGroup()
 
 
 def move(hero, movement):
     x, y = hero.pos
     if movement == "up":
-        if y > 0 and level_map[y - 1][x] == "."\
+        if y > 0 and (level_map[y - 1][x] == "."\
                 or level_map[y - 1][x] == '!'\
-                or level_map[y - 1][x] == '%':
+                or level_map[y - 1][x] == '%'):
             hero.move(x, y - 1)
     elif movement == "down":
-        if y < max_y - 1 and level_map[y + 1][x] == "."\
+        if y < max_y - 1 and (level_map[y + 1][x] == "."\
                 or level_map[y + 1][x] == '!'\
-                or level_map[y + 1][x] == '%':
+                or level_map[y + 1][x] == '%'):
             hero.move(x, y + 1)
     elif movement == "left":
-        if x > 0 and level_map[y][x - 1] == "."\
+        if x > 0 and (level_map[y][x - 1] == "."\
                 or level_map[y][x - 1] == "!"\
-                or level_map[y][x - 1] == "%":
+                or level_map[y][x - 1] == "%"):
             hero.move(x - 1, y)
     elif movement == "right":
-        if x < max_x - 1 and level_map[y][x + 1] == "."\
+        if x < max_x - 1 and (level_map[y][x + 1] == "."\
                 or level_map[y][x + 1] == "!"\
-                or level_map[y][x + 1] == "%":
+                or level_map[y][x + 1] == "%"):
             hero.move(x + 1, y)
 
 
@@ -324,7 +325,7 @@ quantity_levels = 6
 start_screen()
 change_screen()
 level_map = load_level("level_" + str(current_level) + ".txt")
-hero, max_x, max_y, exit_game, vrag = generate_level(level_map)
+hero, max_x, max_y, exit_game, zlo = generate_level(level_map)
 while running:
     if game_over:
         lose_game()
@@ -334,7 +335,7 @@ while running:
         enemies_group.empty()
         current_level = 1
         level_map = load_level("level_" + str(current_level) + ".txt")
-        hero, max_x, max_y, exit_game, vrag = generate_level(level_map)
+        hero, max_x, max_y, exit_game, zlo = generate_level(level_map)
         game_over = False
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -349,29 +350,29 @@ while running:
                 move(hero, "left")
             elif event.key == pygame.K_RIGHT:
                 move(hero, "right")
-        if not pygame.sprite.collide_mask(hero, vrag):
+        if not pygame.sprite.collide_mask(hero, zlo):
             screen.fill(pygame.Color("black"))
             sprite_group.draw(screen)
             exit_group.draw(screen)
-            hero_group.draw(screen)
             enemies_group.draw(screen)
+            hero_group.draw(screen)
         else:
             game_over = True
         if not pygame.sprite.collide_mask(hero, exit_game):
             screen.fill(pygame.Color("black"))
             sprite_group.draw(screen)
             exit_group.draw(screen)
-            hero_group.draw(screen)
             enemies_group.draw(screen)
+            hero_group.draw(screen)
         else:
             current_level += 1
             if current_level != quantity_levels:
                 sprite_group.empty()
                 exit_group.empty()
-                hero_group.empty()
                 enemies_group.empty()
+                hero_group.empty()
                 level_map = load_level("level_" + str(current_level) + ".txt")
-                hero, max_x, max_y, exit_game, vrag = generate_level(level_map)
+                hero, max_x, max_y, exit_game, zlo = generate_level(level_map)
             continue
 
     clock.tick(FPS)
